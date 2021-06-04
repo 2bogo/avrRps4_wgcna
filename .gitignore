@@ -6,3 +6,4 @@ data/pre/
 test/
 .ipynb_checkpoints/
 data/*.csv
+data/nohup.out
