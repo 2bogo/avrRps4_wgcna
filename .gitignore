@@ -1,0 +1,8 @@
+data/fastq/
+data/ix/
+data/pre/
+data/test/
+data/pre/
+test/
+.ipynb_checkpoints/
+data/*.csv
