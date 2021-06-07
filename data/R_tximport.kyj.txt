@@ -1,0 +1,73 @@
+#tximport를 설치하기위해서
+#R버전은 4.03버전을 사용했습니다.
+
+sudo apt-get install libcurl4-openssl-dev libxml2-dev
+
+#BIOCONDUCTOR 설치 코드입니다.
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install(version = "3.12")
+
+#TXIMPORT 설치 코드입니다.
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages("BiocManager")
+BiocManager::install("tximport")
+
+# tx2gene을 만들기위해 몇몇 packages를 설치했습니다.
+install.packages("magrittr") # package installations are only needed the first time you use it
+install.packages("dplyr")    # alternative installation of the %>%
+BiocManager::install("rtracklayer")
+install.packages("tidyverse")
+BiocManager::install("rhdf5")
+
+
+# make tx2gene 
+# tximport에서 사용해야하는 tx2gene을 만드는 코드입니다.
+
+library(magrittr) # needs to be run every time you start R and want to use %>%
+library(dplyr)
+library(rtracklayer)
+library(tidyverse)
+library("tximport")
+library(readr)
+
+##ref- https://www.bioconductor.org/help/course-materials/2017/OSU/Appendix_salmon.html 
+##해당 페이지 4.1 에서 tx2gene만드는 코드를 참고했습니다. 
+##release 29version gff3 version을 사용하면 tx2gene의 결과가 gene1,gene2 ... gene100 이런식이었기 때문에 release-28 version-gff3을 사용했습니다.
+##ftp://ftp.ensemblgenomes.org/pub/plants/release-28
+
+file = file.path('.', "Arabidopsis_thaliana.TAIR10.28.gff3")
+gff = import(file)
+tx2gene = tibble( txid = gff$transcript_id,    geneid = as.character(gff$Parent)) %>% na.omit()
+
+
+## trimport kallisto tpm to counts
+# kallisto결과 파일이 있는 경로를 확인합니다.
+# tximport 결과에서 V1,V2,V3...이런식으로 결과가 나와서 names를 사용하면, sample명을 라벨링해줍니다.
+
+files <- list.files('.' ,pattern='*.tsv', full.names=TRUE)      
+names(files) <-  gsub('_abundance.tsv',"", files )    
+txi.kallisto.tsv<- tximport(files,type='kallisto',tx2gene=tx2gene,ignoreAfterBar=TRUE)
+
+write.csv(
+  txi.kallisto.tsv$counts,   #txi.kallisto.tsv결과에서 counts에 해당하는 columns만 가져옵니다.             
+  file="samplecounts.csv",            
+  row.names=TRUE )
+
+##########
+최종 프로토콜 
+##########
+
+C191_1_S32_L002/  C191_3_S34_L002/  C328_2_S36_L002/  C393_1_S38_L002/  C393_3B_S54_L002/  C396_2_S41_L002/  ref/              S191_2_S44_L002/   S328_1_S45_L002/  S328_3_S47_L002/  S393_2_S49_L002/  S396_1_S51_L002/  S396_3_S53_L002/
+C191_2_S33_L002/  C328_1_S35_L002/  C328_3_S37_L002/  C393_2_S39_L002/  C396_1_S40_L002/   C396_3_S42_L002/  S191_1_S43_L002/  S191_3B_S55_L002/  S328_2_S46_L002/  S393_1_S48_L002/  S393_3_S50_L002/  S396_2_S52_L002/
+(r_version_4) root@ubuntu:/data/k821209/HBG/cowpea# R
+
+> library("tximport")
+> files <- list.files('.' ,pattern='*.tsv', full.names=TRUE, recursive = T)
+> names(files) <-  gsub('_abundance.tsv',"", files )  
+> txi.kallisto.tsv<- tximport(files,type='kallisto',tx2gene=tx2gene,ignoreAfterBar=TRUE)
+> write.csv(
+   txi.kallisto.tsv$counts,   #txi.kallisto.tsv결과에서 counts에 해당하는 columns만 가져옵니다.             
+   file="samplecounts.csv",            
+   row.names=TRUE )
+

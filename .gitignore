@@ -3,6 +3,7 @@ data/ix/
 data/pre/
 data/test/
 data/pre/
+data/tpm/
 test/
 .ipynb_checkpoints/
 data/*.csv
